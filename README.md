@@ -1,6 +1,6 @@
-# Local Deep Research - Windows Setup Guide
+# Local Deep Research - Setup Guide For Windows or Linux
 
-> Quick installation and run guide for Windows
+> Quick installation and run guide
 
 ---
 
@@ -28,7 +28,7 @@ Install and run. It runs in the background on port 11434.
 
 ## One-Click Setup
 
-1. Download `setup-ldr.bat`
+1. Download `setup-ldr.bat` or `setup-ldr.sh` 
 2. Double-click to run
 3. Follow the prompts
 
@@ -48,8 +48,8 @@ The script will:
 ```
 local-deep-research\
 ├── venv\              ← Isolated Python environment
-├── setup-ldr.bat      ← Installer (run once)
-└── start-ldr.bat      ← Quick launch (run anytime)
+├── setup-ldr.bat|sh   ← Installer (run once)
+└── start-ldr.bat|sh   ← Quick launch (run anytime)
 ```
 
 ---
@@ -57,13 +57,22 @@ local-deep-research\
 ## How to Run
 
 ### First time
+* Windows
 ```
 Double-click setup-ldr.bat
 ```
-
+* Linux
+```
+./setup-ldr.sh
+```
 ### Every time after
+* Windows
 ```
 Double-click start-ldr.bat
+```
+* Linux
+```
+./start-ldr.sh
 ```
 
 Then open your browser:
@@ -85,13 +94,13 @@ http://localhost:5000
 
 ## Model Options
 
-| Model | Size | RAM Needed |
-|-------|------|------------|
-| qwen3:8b | ~5GB | 8GB+ |
-| qwen3:14b | ~9GB | 12GB+ |
-| qwen3:32b | ~20GB | 16GB+ |
-| gemma3:12b | ~8GB | 12GB+ |
-| llama3.1:8b | ~5GB | 8GB+ |
+| Model | Size | VRAM Needed |
+|-------|------|-------------|
+| qwen3:8b | ~5GB | 8GB+        |
+| qwen3:14b | ~9GB | 12GB+       |
+| qwen3:32b | ~20GB | 16GB+       |
+| gemma3:12b | ~8GB | 12GB+       |
+| llama3.1:8b | ~5GB | 8GB+        |
 
 ---
 
@@ -109,7 +118,7 @@ No SQLCipher compilation needed for local-only use.
 
 | Component | Minimum | Recommended |
 |-----------|---------|-------------|
-| OS | Windows 10/11 | Windows 11 |
+| OS | Windows 10/11 | Windows 11 | Linux (Debian/Ubuntu/Gentoo/Arch/...)
 | RAM | 8GB | 16GB+ |
 | Storage | 10GB free | 20GB+ free |
 | Internet | Required for setup | Not needed after |
