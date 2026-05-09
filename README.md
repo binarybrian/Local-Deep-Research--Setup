@@ -124,6 +124,8 @@ No SQLCipher compilation needed for local-only use.
 | Internet | Required for setup | Not needed after |
 
 ---
+## Advanced
+The linux script supports remote Ollama and SearXNG It will patch the default settings.json file with the URLs you provide. It is recommended to keep it local to your LAN, e.g. TrueNAS apps running on a NAS server.
 
 ## Troubleshooting
 
