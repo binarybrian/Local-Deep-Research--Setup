@@ -70,9 +70,10 @@ if [[ "$OLLAMA_MODE" == "2" ]]; then
 fi
 echo
 
-# Export endpoints so the ollama CLI and LDR use the right services
+# OLLAMA_HOST is used by the ollama CLI tool (e.g. ollama pull) only.
+# LDR reads its Ollama/SearXNG URLs from its own settings database,
+# which we patch in default_settings.json after install (see below).
 export OLLAMA_HOST="$OLLAMA_URL"
-export SEARXNG_BASE_URL="$SEARXNG_URL"
 
 # -----------------------------------------------
 # Step 0: Check prerequisites
@@ -185,10 +186,50 @@ if ! pip install local-deep-research; then
 fi
 echo
 echo "  [OK] LDR installed successfully!"
+
+# Patch LDR's default settings so remote URLs are seeded on first launch.
+# LDR does NOT read OLLAMA_HOST or any env var for these — it uses its
+# own settings database, initialized from default_settings.json.
+DEFAULTS_JSON=$(python3 -c "import local_deep_research.defaults as d, os; print(os.path.join(os.path.dirname(d.__file__), 'default_settings.json'))")
+if [[ -f "$DEFAULTS_JSON" ]]; then
+    python3 <<PYEOF
+import json, sys
+
+path = "$DEFAULTS_JSON"
+ollama_url = "$OLLAMA_URL"
+searxng_url = "$SEARXNG_URL"
+
+with open(path, "r") as f:
+    settings = json.load(f)
+
+changed = False
+
+if ollama_url != "http://localhost:11434":
+    for key in ("llm.ollama.url", "embeddings.ollama.url"):
+        if key in settings:
+            settings[key]["value"] = ollama_url
+            changed = True
+
+if searxng_url != "http://localhost:8080":
+    key = "search.engine.web.searxng.default_params.instance_url"
+    if key in settings:
+        settings[key]["value"] = searxng_url
+        changed = True
+
+if changed:
+    with open(path, "w") as f:
+        json.dump(settings, f, indent=4)
+    print("  [OK] Patched LDR default settings with remote URLs")
+else:
+    print("  [OK] LDR default settings unchanged (using localhost defaults)")
+PYEOF
+else
+    echo -e "${YELLOW}[WARNING] Could not find default_settings.json to patch${NC}"
+fi
 echo
 
 # -----------------------------------------------
-# Step 2: Run SearXNG
+# Step 4: Run SearXNG
 # -----------------------------------------------
 echo "[5/7] Setting up SearXNG search engine..."
 echo
@@ -281,9 +322,8 @@ source "\${SCRIPT_DIR}/venv/bin/activate"
 # Skip encryption for simplicity
 export LDR_BOOTSTRAP_ALLOW_UNENCRYPTED=true
 
-# Service endpoints
+# OLLAMA_HOST is for the ollama CLI tool only; LDR reads its own settings DB.
 export OLLAMA_HOST="${OLLAMA_URL}"
-export SEARXNG_BASE_URL="${SEARXNG_URL}"
 
 STARTEOF
 
@@ -311,6 +351,13 @@ echo "  LDR Web:   http://localhost:5000"
 echo
 echo "  Press Ctrl+C to stop"
 echo
+if [[ "$USE_REMOTE_OLLAMA" == "true" || "$USE_REMOTE_SEARXNG" == "true" ]]; then
+    echo -e "${YELLOW}  NOTE: Remote URLs are pre-configured in LDR defaults."
+    echo -e "  If you need to change them later, go to Settings in the LDR web UI:"
+    [[ "$USE_REMOTE_OLLAMA" == "true" ]]  && echo "    Ollama URL:  Settings > LLM > Ollama Endpoint Url"
+    [[ "$USE_REMOTE_SEARXNG" == "true" ]] && echo "    SearXNG URL: Settings > Search > SearXNG > Endpoint URL"
+    echo -e "${NC}"
+fi
 
 ldr-web
 STARTEOF
@@ -324,7 +371,6 @@ echo
 # Launch LDR Web UI
 # -----------------------------------------------
 export LDR_BOOTSTRAP_ALLOW_UNENCRYPTED=true
-export SEARXNG_BASE_URL="$SEARXNG_URL"
 
 echo "============================================"
 echo "  Starting LDR Web UI..."
@@ -337,5 +383,12 @@ echo "  LDR Web:   http://localhost:5000"
 echo
 echo "  Press Ctrl+C to stop"
 echo
+if [[ "$USE_REMOTE_OLLAMA" == "true" || "$USE_REMOTE_SEARXNG" == "true" ]]; then
+    echo -e "${YELLOW}  NOTE: Remote URLs are pre-configured in LDR defaults."
+    echo -e "  If you need to change them later, go to Settings in the LDR web UI:"
+    [[ "$USE_REMOTE_OLLAMA" == "true" ]]  && echo "    Ollama URL:  Settings > LLM > Ollama Endpoint Url"
+    [[ "$USE_REMOTE_SEARXNG" == "true" ]] && echo "    SearXNG URL: Settings > Search > SearXNG > Endpoint URL"
+    echo -e "${NC}"
+fi
 
 ldr-web
